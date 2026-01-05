@@ -7,8 +7,14 @@ import (
 
 type L uint32
 
+var spins int = 200
+
+func init() {
+	spins = runtime.NumCPU() * 50
+}
 func (sl *L) Lock() {
-	for range 200 {
+
+	for range spins {
 		if atomic.CompareAndSwapUint32((*uint32)(sl), 0, 1) {
 			return
 		}
