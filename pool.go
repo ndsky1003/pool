@@ -1,31 +1,26 @@
 package pool
 
 import (
+	"sync"
 	"sync/atomic"
-
-	"github.com/ndsky1003/pool/spinlock"
 )
 
 type AdaptiveRingPool[T any] struct {
-	// --------------- 第一缓存行：锁（x86_64热点，独占64字节）---------------
-	mu spinlock.L
-	_  [60]byte // 64 - 4 = 60
+	mu sync.Mutex
 
-	// --------------- 第二缓存行：核心热点字段（head/tail/count）---------------
 	head  int      // 取数位置（高频读写）
 	tail  int      // 放数位置（高频读写）
 	count int      // 空闲数（高频读写）
 	_     [40]byte // 64 - 24 = 40
 
-	// --------------- 第三缓存行：原子统计变量（x86_64原子操作需对齐）---------------
 	hitCount atomic.Int64 // 命中数（高频读，低频写）
 	getCount atomic.Int64 // 总获取数（高频写）
 	curCap   int          // 当前容量（低频修改）
 	_        [40]byte     // 64 - 3*8 = 40
 
 	opt Option
+	_   [16]byte
 
-	// --------------- 第4缓存行：函数指针+缓冲区（最冷字段）---------------
 	New    func() T // 创建函数（初始化后不变）
 	buffer []T      // 环形队列（低频大尺寸访问）
 	_      [32]byte // 64 - 8 - 24  = 32
