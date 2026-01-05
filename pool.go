@@ -29,9 +29,19 @@ type AdaptiveRingPool[T any] struct {
 // NewAdaptiveRingPool 创建自适应环形池，个人项目无脑用这个，默认配置足够
 func NewAdaptiveRingPool[T any](newFunc func() T, opts ...OptionFunc) *AdaptiveRingPool[T] {
 	opt := DefaultOptions()
+
 	for _, f := range opts {
 		f(&opt)
 	}
+
+	if opt.MinCapacity <= 0 {
+		opt.MinCapacity = 32
+	}
+
+	if opt.MaxCapacity < opt.MinCapacity {
+		opt.MaxCapacity = opt.MinCapacity
+	}
+
 	o := &AdaptiveRingPool[T]{
 		buffer: make([]T, opt.MinCapacity),
 		curCap: opt.MinCapacity,
