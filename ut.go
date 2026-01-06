@@ -1,5 +1,7 @@
 package pool
 
+import "math/bits"
+
 func nextPowerOfTwo(n int32) int32 {
 	if n <= 0 {
 		return 1
@@ -45,11 +47,6 @@ func log2(n int) int32 {
 	if n <= 0 || (n&(n-1)) != 0 {
 		panic("n must be power of two")
 	}
-	// 找到n对应的索引（n=2^pos → pos=log2Table[index]）
-	index := 0
-	for n > 1 {
-		n >>= 1
-		index++
-	}
+	index := bits.Len(uint(n)) - 1
 	return log_2_table[index]
 }
